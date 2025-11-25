@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learn Clock Face</title>
+    <style>
+        /* Color Palette from test2.png (Cool Tones):
+           #F9F9FB - White/Background (Strip 1)
+           #C8CDD5 - Light Grey-Blue (Minute Numbers/Accent) (Strip 2)
+           #A3A8C2 - Lavender (Seconds) (Strip 3)
+           #245CA6 - Royal Blue (Minutes/Primary Actions) (Strip 4)
+           #575C63 - Charcoal (Hours/Dark Elements) (Strip 5)
+        */
+        :root {
+            --primary: #245CA6;   /* Royal Blue (Minute Hand) */
+            --primary-dark: #1A4680; 
+            --secondary: #F9F9FB; /* Clean White Background */
+            --dark: #575C63;      /* Charcoal (Hours, Borders) */
+            --red: #A3A8C2;       /* Lavender (Seconds) */
+            --green: #245CA6;     /* Royal Blue (Reveal Button) */
+            --accent: #788296;    /* Darker Grey-Blue for text/secondary buttons */
+            --minute-nums: #8FA0BC; /* Soft Blue-Grey for outer numbers */
+            --btn-text: #fff;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background-color: var(--secondary);
+            
+            /* Patterned Background: Graph Paper style */
+            background-image: 
+                linear-gradient(rgba(143, 160, 188, 0.15) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(143, 160, 188, 0.15) 1px, transparent 1px);
+            background-size: 20px 20px;
+            
+            margin: 0;
+            user-select: none;
+            transition: background 0.3s;
+        }
+
+        h1 { color: var(--dark); margin-bottom: 5px; }
+        p { color: #8899a6; margin-bottom: 20px; max-width: 400px; text-align: center; line-height: 1.5;}
+
+        /* --- CLOCK FACE --- */
+        .clock-container {
+            position: relative;
+            width: 340px;
+            height: 340px;
+            background: white;
+            border-radius: 50%;
+            border: 12px solid var(--dark);
+            box-shadow: 0 15px 30px rgba(87, 92, 99, 0.15); /* Soft charcoal shadow */
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .center-dot {
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            background: var(--red);
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        /* Hour Numbers (Inner Circle) */
+        .number {
+            position: absolute;
+            font-size: 2rem; 
+            font-weight: 800;
+            color: var(--dark);
+            text-align: center;
+            width: 40px;
+            height: 40px;
+            line-height: 40px;
+            z-index: 2;
+        }
+
+        /* Minute/Second Numbers (Outer Circle) */
+        .minute-number {
+            position: absolute;
+            font-size: 1.1rem; 
+            font-weight: 700;
+            color: var(--minute-nums); /* Soft Blue-Grey */
+            text-align: center;
+            width: 30px;
+            height: 30px;
+            line-height: 30px;
+            z-index: 8; 
+            text-shadow: 0 0 3px white; 
+        }
+
+        /* Tick Marks */
+        .tick {
+            position: absolute;
+            width: 2px;
+            height: 8px;
+            background: #e0e0e0;
+            left: 50%;
+            top: 2px;
+            transform-origin: 50% 168px;
+        }
+        
+        .tick.large {
+            height: 15px;
+            background: var(--minute-nums); 
+            width: 3px;
+        }
+
+        /* --- HANDS --- */
+        .hand {
+            position: absolute;
+            bottom: 50%;
+            left: 50%;
+            transform-origin: bottom center;
+            border-radius: 10px;
+            transition: transform 0.2s cubic-bezier(0.4, 2.08, 0.55, 0.44);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .hour-hand {
+            width: 12px;
+            height: 60px; /* Short enough to point to inner numbers */
+            background: var(--dark);
+            margin-left: -6px;
+            z-index: 5;
+        }
+
+        .minute-hand {
+            width: 8px;
+            height: 80px; 
+            background: var(--primary);
+            margin-left: -4px;
+            z-index: 6;
+        }
+        
+        /* The "Needle" Tip for Minute Hand */
+        .minute-hand::after {
+            content: '';
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 2px; 
+            height: 60px; /* Long enough to reach outer numbers */
+            background: var(--primary);
+            box-shadow: none;
+        }
+
+        .second-hand {
+            width: 4px;
+            height: 130px;
+            background: var(--red);
+            margin-left: -2px;
+            z-index: 7;
+            border-radius: 4px;
+            transition: transform 0.1s linear;
+        }
+
+        /* --- CONTROLS --- */
+        .controls {
+            background: white;
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(87, 92, 99, 0.1);
+            width: 340px;
+            text-align: center;
+        }
+
+        /* Level Selector Dropdown */
+        .level-select {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            border: 2px solid var(--dark);
+            background-color: white;
+            font-size: 1rem;
+            font-weight: bold;
+            color: var(--dark);
+            cursor: pointer;
+            outline: none;
+        }
+        .level-select:focus { border-color: var(--primary); }
+
+        .digital-display-container {
+            background: #F0F4F8; /* Very light cool grey bg */
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 15px;
+            position: relative;
+        }
+
+        .digital-display {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--dark);
+            font-family: 'Courier New', monospace;
+            letter-spacing: 2px;
+        }
+        
+        .small-seconds {
+            font-size: 1.5rem;
+            color: var(--red); /* Lavender seconds text */
+        }
+
+        .hidden-text {
+            color: var(--primary);
+            letter-spacing: 5px;
+        }
+
+        .slider-group {
+            margin-bottom: 10px;
+            text-align: left;
+        }
+
+        label { 
+            display: flex; 
+            justify-content: space-between;
+            font-weight: 600; 
+            margin-bottom: 2px; 
+            color: #788296; 
+            font-size: 0.85rem;
+        }
+        
+        input[type=range] {
+            width: 100%;
+            cursor: pointer;
+            /* Default accent, we override below */
+        }
+        #hourRange { accent-color: var(--dark); }
+        #minuteRange { accent-color: var(--primary); }
+        #secondRange { accent-color: var(--red); }
+        
+
+        /* Buttons */
+        .btn-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        button {
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.1s, opacity 0.2s, background-color 0.2s;
+            color: white;
+            text-shadow: 0 1px 1px rgba(0,0,0,0.1);
+        }
+        button:active { transform: scale(0.98); }
+
+        .btn-quiz { 
+            background-color: var(--accent); /* Blue-Grey */
+            grid-column: span 2; 
+        }
+        .btn-quiz:hover { background-color: #646E82; }
+
+        .btn-reveal { 
+            background-color: var(--green); /* Royal Blue */
+            display: none; 
+            grid-column: span 2; 
+        }
+        .btn-reveal:hover { background-color: #1A4680; }
+
+        .btn-reset { 
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background-color: var(--dark); /* Charcoal (No Blue) */
+            color: var(--secondary);
+            font-size: 0.9rem; 
+            padding: 10px 15px; 
+            border-radius: 50px; /* Pill shape for corner button */
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .btn-reset:hover { background-color: #3E4247; }
+
+        /* --- VISIBILITY MODES (Controlled by body class) --- */
+        
+        /* Level 1: Hours Only */
+        body.level-1 .minute-hand,
+        body.level-1 .second-hand,
+        body.level-1 .minute-number,
+        body.level-1 #group-second,
+        body.level-1 .digital-sec,
+        body.level-1 .digital-min-part {
+            display: none !important;
+        }
+        /* Use visibility: hidden for minute slider to preserve layout height */
+        body.level-1 #group-minute {
+            visibility: hidden;
+        }
+
+        /* Level 2: Hours & Minutes (No Seconds) */
+        body.level-2 .second-hand,
+        body.level-2 #group-second,
+        body.level-2 .digital-sec {
+            display: none !important;
+        }
+
+        /* Level 3: Real Life Clock (No Helper Numbers, No Seconds) */
+        body.level-3 .second-hand,
+        body.level-3 #group-second,
+        body.level-3 .digital-sec,
+        body.level-3 .minute-number {
+            display: none !important;
+        }
+
+    </style>
+</head>
+<body class="level-1">
+
+    <h1>Learn Clock Face</h1>
+    <p>3 steps to read a clock face</p></p>
+
+    <div class="clock-container">
+        <!-- Generated Elements -->
+        <div id="clockFace"></div>
+        <div class="center-dot"></div>
+        
+        <!-- Hands -->
+        <div class="hand hour-hand" id="hourHand"></div>
+        <div class="hand minute-hand" id="minuteHand"></div>
+        <div class="hand second-hand" id="secondHand"></div>
+    </div>
+
+    <div class="controls">
+        
+        <select class="level-select" id="levelSelect" onchange="changeLevel(this.value)">
+            <option value="1" selected>Level 1: Hours Only</option>
+            <option value="2">Level 2: Hours & Minutes</option>
+            <option value="3">Level 3: Real Life Clock</option>
+        </select>
+
+        <div class="digital-display-container">
+            <div class="digital-display" id="digitalTime">
+                <span id="dHour">12</span><span id="dMin" class="digital-min-part">:00</span><span id="dSec" class="digital-sec small-seconds">:00</span>
+            </div>
+        </div>
+
+        <div class="slider-group" id="group-hour">
+            <label><span>Hour</span> <span id="hourLabel">12</span></label>
+            <input type="range" id="hourRange" min="1" max="12" value="12">
+        </div>
+
+        <div class="slider-group" id="group-minute">
+            <label><span>Minute</span> <span id="minuteLabel">00</span></label>
+            <input type="range" id="minuteRange" min="0" max="59" value="0">
+        </div>
+
+        <div class="slider-group" id="group-second">
+            <label><span style="color:var(--red)">Second</span> <span id="secondLabel" style="color:var(--red)">00</span></label>
+            <input type="range" id="secondRange" min="0" max="59" value="0">
+        </div>
+
+        <div class="btn-group">
+            <button class="btn-quiz" id="btnQuiz" onclick="startQuiz()">❓ New Mystery Time</button>
+            <button class="btn-reveal" id="btnReveal" onclick="revealAnswer()">👁️ Reveal Answer</button>
+        </div>
+        
+    </div>
+
+    <button class="btn-reset" onclick="resetMode()">⟲ Reset</button>
+
+    <script>
+        // --- Setup Elements ---
+        const hourHand = document.getElementById('hourHand');
+        const minuteHand = document.getElementById('minuteHand');
+        const secondHand = document.getElementById('secondHand');
+        
+        const hourInput = document.getElementById('hourRange');
+        const minuteInput = document.getElementById('minuteRange');
+        const secondInput = document.getElementById('secondRange');
+        
+        const dHour = document.getElementById('dHour');
+        const dMin = document.getElementById('dMin');
+        const dSec = document.getElementById('dSec');
+        const digitalDisplay = document.getElementById('digitalTime');
+        
+        const hourLabel = document.getElementById('hourLabel');
+        const minuteLabel = document.getElementById('minuteLabel');
+        const secondLabel = document.getElementById('secondLabel');
+        
+        const btnQuiz = document.getElementById('btnQuiz');
+        const btnReveal = document.getElementById('btnReveal');
+        const clockFace = document.getElementById('clockFace');
+
+        let isQuizMode = false;
+        let currentLevel = 1; 
+
+        // --- Generate Clock Face ---
+        const radius = 170; 
+        
+        // 1. Generate Hour Numbers (INNER Circle)
+        for (let i = 1; i <= 12; i++) {
+            const num = document.createElement('div');
+            num.className = 'number';
+            num.textContent = i;
+            const angle = (i * 30) - 90; 
+            const rad = angle * (Math.PI / 180);
+            const dist = 95; 
+            const x = Math.cos(rad) * dist + radius - 20; 
+            const y = Math.sin(rad) * dist + radius - 20;
+            num.style.left = `${x}px`;
+            num.style.top = `${y}px`;
+            clockFace.appendChild(num);
+        }
+
+        // 2. Generate Minute/Second Numbers (OUTER Circle)
+        for (let i = 0; i < 60; i += 5) {
+            const num = document.createElement('div');
+            num.className = 'minute-number';
+            num.textContent = i === 0 ? '60' : i;
+            const angle = (i * 6) - 90;
+            const rad = angle * (Math.PI / 180);
+            const dist = 145; 
+            const x = Math.cos(rad) * dist + radius - 15;
+            const y = Math.sin(rad) * dist + radius - 15;
+            num.style.left = `${x}px`;
+            num.style.top = `${y}px`;
+            clockFace.appendChild(num);
+        }
+
+        // 3. Generate Ticks
+        for (let i = 0; i < 60; i++) {
+            const tick = document.createElement('div');
+            tick.className = i % 5 === 0 ? 'tick large' : 'tick';
+            tick.style.transform = `rotate(${i * 6}deg)`;
+            clockFace.appendChild(tick);
+        }
+
+        // --- Core Logic ---
+
+        function changeLevel(level) {
+            currentLevel = parseInt(level);
+            document.body.className = `level-${currentLevel}`;
+            resetMode();
+        }
+
+        function updateClock(isAutoUpdate = false) {
+            if (isQuizMode && !isAutoUpdate) revealAnswer();
+
+            const hours = parseInt(hourInput.value);
+            let minutes = parseInt(minuteInput.value);
+            if (currentLevel === 1) minutes = 0; 
+
+            let seconds = parseInt(secondInput.value);
+            // Removed Seconds logic: Always 0 since no level uses them now
+            seconds = 0;
+
+            // Angle Math
+            const secondDeg = seconds * 6; 
+            const minuteDeg = (minutes * 6) + (seconds * 0.1); 
+            const hourDeg = (hours * 30) + (minutes * 0.5); 
+
+            // Visual Updates
+            secondHand.style.transform = `rotate(${secondDeg}deg)`;
+            minuteHand.style.transform = `rotate(${minuteDeg}deg)`;
+            hourHand.style.transform = `rotate(${hourDeg}deg)`;
+
+            // Format Text
+            const dispMin = minutes < 10 ? '0' + minutes : minutes;
+            const dispSec = seconds < 10 ? '0' + seconds : seconds;
+            
+            // Update Labels
+            if (isQuizMode) {
+                hourLabel.textContent = "?";
+                minuteLabel.textContent = "??";
+                secondLabel.textContent = "??";
+            } else {
+                hourLabel.textContent = hours;
+                minuteLabel.textContent = dispMin;
+                secondLabel.textContent = dispSec;
+            }
+
+            // Update Main Display
+            if (!isQuizMode) {
+                dHour.textContent = hours;
+                dMin.textContent = `:${dispMin}`;
+                dSec.textContent = `:${dispSec}`;
+                digitalDisplay.classList.remove('hidden-text');
+            }
+        }
+
+        function startQuiz() {
+            isQuizMode = true;
+
+            const rHour = Math.floor(Math.random() * 12) + 1;
+            let rMin = 0;
+            // No rSec generation needed as seconds are disabled
+
+            if (currentLevel >= 2) rMin = Math.floor(Math.random() * 60);
+            
+            hourInput.value = rHour;
+            minuteInput.value = rMin;
+            secondInput.value = 0;
+
+            updateClock(true);
+
+            if (currentLevel === 1) {
+                dHour.textContent = "?";
+                dMin.textContent = "";
+            } else {
+                dHour.textContent = "??";
+                dMin.textContent = ":??";
+            }
+            dSec.textContent = ""; 
+            
+            digitalDisplay.classList.add('hidden-text');
+
+            btnQuiz.style.display = 'none';
+            btnReveal.style.display = 'inline-block';
+        }
+
+        function revealAnswer() {
+            isQuizMode = false;
+            updateClock();
+            btnQuiz.style.display = 'inline-block';
+            btnReveal.style.display = 'none';
+        }
+
+        function resetMode() {
+            hourInput.value = 12;
+            minuteInput.value = 0;
+            secondInput.value = 0;
+            isQuizMode = false;
+            btnQuiz.style.display = 'inline-block';
+            btnReveal.style.display = 'none';
+            updateClock();
+        }
+
+        // --- Event Listeners ---
+        hourInput.addEventListener('input', () => updateClock());
+        minuteInput.addEventListener('input', () => updateClock());
+        secondInput.addEventListener('input', () => updateClock());
+
+        // Initialize
+        changeLevel(1);
+
+    </script>
+</body>
+</html>
