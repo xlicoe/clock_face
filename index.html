@@ -40,6 +40,7 @@
             background-size: 20px 20px;
             
             margin: 0;
+            padding: 20px 0; /* Add padding to prevent cut-off on small screens */
             user-select: none;
             transition: background 0.3s;
         }
@@ -58,6 +59,7 @@
             box-shadow: 0 15px 30px rgba(87, 92, 99, 0.15); /* Soft charcoal shadow */
             margin-bottom: 20px;
             transition: all 0.3s ease;
+            flex-shrink: 0; /* Prevent clock from squishing on small screens */
         }
 
         .center-dot {
@@ -281,14 +283,13 @@
         .btn-reveal:hover { background-color: #1A4680; }
 
         .btn-reset { 
-            position: absolute;
-            bottom: 20px;
-            left: 20px;
+            /* Moved from absolute positioning to standard flow */
+            margin-top: 20px;
             background-color: var(--dark); /* Charcoal (No Blue) */
             color: var(--secondary);
             font-size: 0.9rem; 
-            padding: 10px 15px; 
-            border-radius: 50px; /* Pill shape for corner button */
+            padding: 10px 20px; 
+            border-radius: 50px; /* Pill shape */
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
         .btn-reset:hover { background-color: #3E4247; }
@@ -329,7 +330,7 @@
 <body class="level-1">
 
     <h1>Learn Clock Face</h1>
-    <p>3 steps to read a clock face</p></p>
+    <p>Select a level to read clock face</p>
 
     <div class="clock-container">
         <!-- Generated Elements -->
@@ -378,6 +379,7 @@
         
     </div>
 
+    <!-- Reset Button moved out of absolute positioning to natural flow -->
     <button class="btn-reset" onclick="resetMode()">⟲ Reset</button>
 
     <script>
